@@ -1,16 +1,18 @@
-import psycopg2
+import mysql.connector as myc
 
 print('connecting in progress')
 
+connect_args ={
+    'host': 'std-mysql.ist.mospolytech.ru',
+    'port': '3306',
+    'user': 'std_1690_apl',
+    'password': 'porolotbdapl',
+}
+
 try:
-    connection = psycopg2.connect(
-        database = 'std_1690_apl',
-        user = 'std_1690_apl',
-        password = 'porolotbdapl',
-        port = '322',
-        host = 'std-mysql.ist.mospolytech.ru'
-    )
+    db = myc.connect(**connect_args)
+    cursor = db.cursor(named_tuple=True)
     print("[INFO] connection established")
-    cur = connection.cursor()
+
 except:
     print("[INFO] no connection with database")
