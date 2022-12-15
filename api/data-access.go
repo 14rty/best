@@ -3,22 +3,23 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
+	"net/http"
+	"log"
 	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
 type User struct {
-	ID       int64
+	ID       int
 	FName    string
 	LName    string
-	Password float32
+	Password int
 }
 
 const (
 	host     = "my_db"
-	port     = 3306
+	port     = 5432
 	user     = "db_user"
 	password = "password4db"
 	dbname   = "my_db"
@@ -30,14 +31,14 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", psqlInfo)
+	var err error
+	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 	defer fmt.Println("[INFO] Connection closed")
 	defer db.Close()
-
+	
 	err = db.Ping()
 	if err != nil {
 		panic(err)
@@ -45,25 +46,28 @@ func main() {
 
 	fmt.Println("[INFO] Connection established")
 
-	userID, err := addUser(User{
+	user := User{
 		FName:    "John",
 		LName:    "Doe",
 		Password: 123,
-	})
+	}
+	
+	fmt.Println("[CHANGE] HELLOW")
+	
+	userID, err := addUser(user)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("ID of added user: %v\n", userID)
+	log.Fatal(http.ListenAndServe(":433", nil))
 }
 
-func addUser(alb User) (int64, error) {
-	result, err := db.Exec("INSERT INTO users (first_name, last_name, password) VALUES (?, ?, ?)", alb.FName, alb.LName, alb.Password)
+func addUser(alb User) (sql.Result, error) {
+	fmt.Println(alb)
+	result, err := db.Exec("INSERT INTO users (first_name, last_name, password) VALUES ($1, $2, $3) RETURNING Id", alb.FName, alb.LName, alb.Password)
 	if err != nil {
-		return 0, fmt.Errorf("addUser: %v", err)
+		panic(err)
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("addUser: %v", err)
-	}
-	return id, nil
+	return result, nil
 }
+
